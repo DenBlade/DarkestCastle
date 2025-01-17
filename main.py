@@ -42,6 +42,9 @@ class Game:
                         self.is_dragging_light = False
             if self.is_dragging_light:
                 self.light_source.move(delta_time)
+            else:
+                if(abs(self.light_source.get_displacement()[0]) > APPROXIMATE_ZERO and abs(self.light_source.get_displacement()[1]) > APPROXIMATE_ZERO):
+                    self.light_source.momentum(delta_time)
             self.all_sprites.draw()
             self.light_source.draw()
             pygame.display.update()

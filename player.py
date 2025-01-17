@@ -13,6 +13,7 @@ class LightSource:
         self.dark_mask_circle = pygame.Surface((self.radius*2, self.radius*2))
         self.light_mask = pygame.Surface((self.radius*2, self.radius*2))
         self.last_pos = pygame.Vector2(self.hitbox_rect.center)
+        self.last_mouse_pos = pygame.Vector2(self.hitbox_rect.center)
         self.prepare_light_mask()
 
     def prepare_light_mask(self):
@@ -22,6 +23,7 @@ class LightSource:
             pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
 
     def draw(self):
+        self.dark_mask.fill((0,0,0))
         self.dark_mask.blit(self.dark_mask_circle, (self.hitbox_rect.center[0]-self.radius, self.hitbox_rect.center[1]-self.radius))
         self.display.blit(self.light_mask, (self.hitbox_rect.center[0]-self.radius,self.hitbox_rect.center[1]-self.radius), special_flags=pygame.BLEND_ADD)
         self.display.blit(self.dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
@@ -29,6 +31,18 @@ class LightSource:
     def move(self, delta_time):
         mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
         displacement = (mouse_pos - self.last_pos)
+        speed = displacement * delta_time
+        self.hitbox_rect.x += speed.x
+        self.collision("horizontal", displacement)
+        self.hitbox_rect.y += speed.y
+        self.collision("vertical", displacement)
+        self.last_pos = pygame.Vector2(self.hitbox_rect.center)
+        self.last_mouse_pos = mouse_pos
+
+    def get_displacement(self):
+        return self.last_mouse_pos - self.last_pos
+    def momentum(self, delta_time):
+        displacement = (self.last_mouse_pos - self.last_pos)
         self.hitbox_rect.x += displacement.x * delta_time
         self.collision("horizontal", displacement)
         self.hitbox_rect.y += displacement.y * delta_time
