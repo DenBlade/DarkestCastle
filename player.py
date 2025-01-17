@@ -10,17 +10,20 @@ class LightSource:
         self.hitbox_rect = pygame.FRect(position, (radius/5+5, radius/5+5))
         self.hitbox_rect.center = position
         self.dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        self.light_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.dark_mask_circle = pygame.Surface((self.radius*2, self.radius*2))
+        self.light_mask = pygame.Surface((self.radius*2, self.radius*2))
         self.last_pos = pygame.Vector2(self.hitbox_rect.center)
+        self.prepare_light_mask()
+
+    def prepare_light_mask(self):
+        for i in range(0, 255):
+            pygame.draw.circle(self.dark_mask_circle, (i, i, i), (self.radius,self.radius), self.radius * ((256 - i) / 256))
+            brighter_rgb = min(255, i+180)
+            pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
 
     def draw(self):
-        self.dark_mask.fill((0, 0, 0))
-        self.light_mask.fill((0, 0, 0))
-        for i in range(0, 255):
-            pygame.draw.circle(self.dark_mask, (i, i, i), self.hitbox_rect.center, self.radius * ((256 - i) / 256))
-            brighter_rgb = min(255, i+180)
-            pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), self.hitbox_rect.center, self.radius/5 * ((256 - i) / 256))
-        self.display.blit(self.light_mask, (0, 0), special_flags=pygame.BLEND_ADD)
+        self.dark_mask.blit(self.dark_mask_circle, (self.hitbox_rect.center[0]-self.radius, self.hitbox_rect.center[1]-self.radius))
+        self.display.blit(self.light_mask, (self.hitbox_rect.center[0]-self.radius,self.hitbox_rect.center[1]-self.radius), special_flags=pygame.BLEND_ADD)
         self.display.blit(self.dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
 
     def move(self, delta_time):
