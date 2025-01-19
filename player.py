@@ -28,7 +28,10 @@ class LightSource:
         self.display.blit(self.light_mask, (self.hitbox_rect.center[0]-self.radius,self.hitbox_rect.center[1]-self.radius), special_flags=pygame.BLEND_ADD)
         self.display.blit(self.dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
 
-    def move(self, delta_time):
+    def offset(self, offset):
+        offset_vec = pygame.Vector2(offset)
+        self.hitbox_rect.center += offset_vec
+    def move_by_mouse(self, delta_time):
         mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
         displacement = (mouse_pos - self.last_pos)
         speed = displacement * delta_time
@@ -38,7 +41,6 @@ class LightSource:
         self.collision("vertical", displacement)
         self.last_pos = pygame.Vector2(self.hitbox_rect.center)
         self.last_mouse_pos = mouse_pos
-
     def get_displacement(self):
         return self.last_mouse_pos - self.last_pos
     def momentum(self, delta_time):
@@ -62,3 +64,4 @@ class LightSource:
                         self.hitbox_rect.bottom = sprite.rect.top
                     if displacement.y < 0:
                         self.hitbox_rect.top = sprite.rect.bottom
+
