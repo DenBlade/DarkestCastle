@@ -1,9 +1,12 @@
 import sys
 
 import pygame
+
+
 import player
 import sprites
 import groups
+import ui
 from settings import *
 from pytmx.util_pygame import load_pygame
 from os.path import join as os_join
@@ -24,6 +27,7 @@ class Game:
         self.x = 0
         self.distance = 0
         self.running = True
+        self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS-1))
         self.prepare_map()
 
     def prepare_map(self):
@@ -74,6 +78,8 @@ class Game:
                 if(self.x <= LEVEL_WIDTH*(LEVELS-1)):
                     self.screen_slide()
             self.running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
+            # self.display.blit(self.progress_bar, (80, 610))
+            self.progress_bar.draw(self.x)
             pygame.display.update()
         self.defeat()
 
