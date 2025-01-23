@@ -20,24 +20,33 @@ class Game:
         self.light_source = player.LightSource((600,200), 100, self.collision_sprites, self.spike_colliders_sprites)
         self.is_dragging_light = False
         self.was_light_source_dragged = False
-        self.screen_sliding_speed = (-0.1, 0)
+        self.screen_sliding_speed = (-0.2, 0)
+        self.x = 0
+        self.distance = 0
         self.running = True
         self.prepare_map()
 
     def prepare_map(self):
-        pytmx_map = load_pygame(os_join("assets", "map", "MapTest3.tmx"))
-        for x, y, tile in pytmx_map.get_layer_by_name("Background").tiles():
-            sprites.Sprite((x*TILE_SIZE, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
-        for x, y, tile in pytmx_map.get_layer_by_name("Spikes").tiles():
-            sprites.Sprite((x*TILE_SIZE, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
-        for item in pytmx_map.get_layer_by_name("Collideable"):
-            sprites.Sprite((item.x, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites))
-        for item in pytmx_map.get_layer_by_name("SpikeColliders"):
-            sprites.Spike(item.name, (item.x, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites, self.spike_colliders_sprites))
+        for i in range(0, LEVELS):
+            file_name = "Level" + str(i) + ".tmx"
+            pytmx_map = load_pygame(os_join("assets", "map", file_name))
+            for x, y, tile in pytmx_map.get_layer_by_name("Background").tiles():
+                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
+            for x, y, tile in pytmx_map.get_layer_by_name("Tiles").tiles():
+                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
+            for item in pytmx_map.get_layer_by_name("Collideable"):
+                sprites.Sprite((item.x+LEVEL_WIDTH*i, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites))
+            for item in pytmx_map.get_layer_by_name("SpikeColliders"):
+                sprites.Spike(item.name, (item.x+LEVEL_WIDTH*i, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites, self.spike_colliders_sprites))
 
     def screen_slide(self):
         self.all_sprites.offset(self.screen_sliding_speed)
         self.light_source.offset(self.screen_sliding_speed)
+        self.x += abs(self.screen_sliding_speed[0])
+        self.distance += abs(self.screen_sliding_speed[0])
+        if(self.distance >= CHANGING_SPEED_THRESHOLD):
+            self.distance = 0
+            self.screen_sliding_speed = (self.screen_sliding_speed[0]-0.1, 0)
 
     def run(self):
         while self.running:
@@ -62,7 +71,8 @@ class Game:
             self.visible_sprites.draw()
             self.light_source.draw()
             if(self.was_light_source_dragged):
-                self.screen_slide()
+                if(self.x <= LEVEL_WIDTH*(LEVELS-1)):
+                    self.screen_slide()
             self.running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
             pygame.display.update()
         self.defeat()
