@@ -20,14 +20,14 @@ class Game:
         self.collision_sprites = pygame.sprite.Group()
         self.spike_colliders_sprites = pygame.sprite.Group()
         self.clock = pygame.time.Clock()
-        self.light_source = player.LightSource((600,200), 100, self.collision_sprites, self.spike_colliders_sprites)
+        self.light_source = player.LightSource((200,200), 100, self.collision_sprites, self.spike_colliders_sprites)
         self.is_dragging_light = False
         self.was_light_source_dragged = False
-        self.screen_sliding_speed = (-0.2, 0)
+        self.screen_sliding_speed = (-0.3, 0)
         self.x = 0
         self.distance = 0
         self.running = True
-        self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS-1))
+        self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
         self.prepare_map()
 
     def prepare_map(self):
@@ -35,13 +35,25 @@ class Game:
             file_name = "Level" + str(i) + ".tmx"
             pytmx_map = load_pygame(os_join("assets", "map", file_name))
             for x, y, tile in pytmx_map.get_layer_by_name("Background").tiles():
-                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
+                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE-TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
             for x, y, tile in pytmx_map.get_layer_by_name("Tiles").tiles():
-                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
+                sprites.Sprite((x*TILE_SIZE+LEVEL_WIDTH*i, y*TILE_SIZE-TILE_SIZE), tile, (self.all_sprites, self.visible_sprites))
             for item in pytmx_map.get_layer_by_name("Collideable"):
-                sprites.Sprite((item.x+LEVEL_WIDTH*i, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites))
+                sprites.Sprite((item.x+LEVEL_WIDTH*i, item.y-TILE_SIZE), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites))
             for item in pytmx_map.get_layer_by_name("SpikeColliders"):
-                sprites.Spike(item.name, (item.x+LEVEL_WIDTH*i, item.y), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites, self.spike_colliders_sprites))
+                sprites.Spike(item.name, (item.x+LEVEL_WIDTH*i, item.y-TILE_SIZE), pygame.Surface((item.width, item.height)), (self.all_sprites, self.collision_sprites, self.spike_colliders_sprites))
+
+        pytmx_map = load_pygame(os_join("assets", "map", "FinalScreen.tmx"))
+        for x, y, tile in pytmx_map.get_layer_by_name("Background").tiles():
+            sprites.Sprite((x * TILE_SIZE + LEVEL_WIDTH * LEVELS, y * TILE_SIZE - TILE_SIZE), tile,
+                           (self.all_sprites, self.visible_sprites))
+        for x, y, tile in pytmx_map.get_layer_by_name("Tiles").tiles():
+            sprites.Sprite((x * TILE_SIZE + LEVEL_WIDTH * LEVELS, y * TILE_SIZE - TILE_SIZE), tile,
+                           (self.all_sprites, self.visible_sprites))
+        for item in pytmx_map.get_layer_by_name("Collideable"):
+            sprites.Sprite((item.x + LEVEL_WIDTH * LEVELS, item.y - TILE_SIZE), pygame.Surface((item.width, item.height)),
+                           (self.all_sprites, self.collision_sprites))
+
 
     def screen_slide(self):
         self.all_sprites.offset(self.screen_sliding_speed)
@@ -50,7 +62,7 @@ class Game:
         self.distance += abs(self.screen_sliding_speed[0])
         if(self.distance >= CHANGING_SPEED_THRESHOLD):
             self.distance = 0
-            self.screen_sliding_speed = (self.screen_sliding_speed[0]-0.1, 0)
+            self.screen_sliding_speed = (self.screen_sliding_speed[0]-0.05, 0)
 
     def run(self):
         while self.running:
@@ -75,7 +87,7 @@ class Game:
             self.visible_sprites.draw()
             self.light_source.draw()
             if(self.was_light_source_dragged):
-                if(self.x <= LEVEL_WIDTH*(LEVELS-1)):
+                if(self.x <= LEVEL_WIDTH*(LEVELS)):
                     self.screen_slide()
             self.running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
             # self.display.blit(self.progress_bar, (80, 610))
