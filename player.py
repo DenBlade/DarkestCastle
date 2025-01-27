@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from settings import *
 
@@ -16,6 +17,8 @@ class LightSource:
         self.last_pos = pygame.Vector2(self.hitbox_rect.center)
         self.last_mouse_pos = pygame.Vector2(self.hitbox_rect.center)
         self.is_alive = True
+        self.death_particles = []
+        self.prepare_particles()
         self.prepare_light_mask()
 
     def prepare_light_mask(self):
@@ -23,6 +26,10 @@ class LightSource:
             pygame.draw.circle(self.dark_mask_circle, (i, i, i), (self.radius,self.radius), self.radius * ((256 - i) / 256))
             brighter_rgb = min(255, i+180)
             pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
+
+    def prepare_particles(self):
+        for i in range(0, 30):
+            self.death_particles.append(Particle("square", (255, 255, 20), random.randint(30, 220), random.randint(2, 8), (random.uniform(-0.4, 0.4), random.uniform(-0.4, 0.4)), random.randint(20, 80)))
 
     def draw(self):
         self.dark_mask.fill((0,0,0))
@@ -96,11 +103,59 @@ class LightSource:
                         if displacement.y > 0:
                             self.is_alive = False
 
+    def defeat_animation(self):
+        self.display.fill((0,0,0))
+        for particle in self.death_particles:
+            if not particle.draw(self.display,self.hitbox_rect.x+random.randint(-10, 10), self.hitbox_rect.y+random.randint(-10, 10)):
+                self.death_particles.remove(particle)
+
 
     def is_out_of_bounds(self):
         return self.hitbox_rect.right < 0
 
     def get_is_alive(self):
         return self.is_alive
+
+class Particle:
+    def __init__(self, type, color, transparency, size, velocity, anim_time):
+        self.type = type # circle/square
+        self.size = size # serves as a radius for circle
+        self.color = color
+        self.transparency = transparency
+        self.velocity = velocity
+        self.x = 0
+        self.y = 0
+        self.anim_time = anim_time
+        self.anim_timer = 0
+        self.max_size = size*3
+        self.surface_alpha = pygame.Surface((self.max_size*2, self.max_size*2), pygame.SRCALPHA)
+
+    def draw(self, surface, x, y):
+        if self.type == 'circle':
+            if self.anim_timer<=self.anim_time:
+                alpha = round(self.transparency * ((self.anim_time - self.anim_timer) / self.anim_time))
+                pygame.draw.circle(self.surface_alpha, self.color + (alpha,), (self.max_size, self.max_size), self.size)
+                surface.blit(self.surface_alpha, (x-self.max_size+self.x, y-self.max_size+self.y))
+                self.x += self.velocity[0]
+                self.y += self.velocity[1]
+                if(self.size <= self.max_size):
+                    self.size += 1
+                self.anim_timer += 0.1
+                return True
+            return False
+        elif self.type == 'square':
+            if self.anim_timer<=self.anim_time:
+                alpha = round(self.transparency * ((self.anim_time - self.anim_timer) / self.anim_time))
+                rect = pygame.FRect(0, 0, self.size, self.size)
+                rect.center = (self.max_size, self.max_size)
+                pygame.draw.rect(self.surface_alpha, self.color + (alpha,), rect)
+                surface.blit(self.surface_alpha, (x-self.max_size+self.x, y-self.max_size+self.y))
+                self.x += self.velocity[0]
+                self.y += self.velocity[1]
+                if(self.size <= self.max_size):
+                    self.size += 1
+                self.anim_timer += 0.1
+                return True
+            return False
 
 

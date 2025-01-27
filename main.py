@@ -28,6 +28,7 @@ class Game:
         self.distance = 0
         self.running = True
         self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
+        self.font = pygame.font.Font('freesansbold.ttf', 128)
         self.prepare_map()
 
     def prepare_map(self):
@@ -96,12 +97,16 @@ class Game:
         self.defeat()
 
     def defeat(self):
-        print("defeat")
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+            self.light_source.defeat_animation()
+            text = self.font.render("Try again", True, (255, 255, 255))
+            self.display.blit(text, (200, 200))
+            self.progress_bar.draw(self.x)
+            pygame.display.update()
 
 game = Game()
 game.run()
