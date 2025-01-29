@@ -26,7 +26,6 @@ class Game:
         self.screen_sliding_speed = (-0.3, 0)
         self.x = 0
         self.distance = 0
-        self.running = True
         self.prepare_map()
         self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
         self.font = pygame.font.Font('freesansbold.ttf', 128)
@@ -65,14 +64,17 @@ class Game:
         bg_image = pygame.image.load(os_join("assets", "images", "background.jpg"))
         bg_image = pygame.transform.scale(bg_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
         dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        thunder_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'thunder2.mp3'))
+        thunder_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'thunder.mp3'))
         lightning_event_timer = pygame.USEREVENT + 1
         pygame.time.set_timer(lightning_event_timer, 1000)
         is_lighten = False
         lightning_blick_event_timer = pygame.USEREVENT + 1
         blicks = 0
-        blicks_max = 9
-        while True:
+        blicks_max = 12
+        play_button = ui.Button("PLAY", (80, 200), 60)
+        exit_button = ui.Button("exit", (80, 280), 40)
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -83,7 +85,7 @@ class Game:
                         is_lighten = True
                         pygame.time.set_timer(lightning_event_timer, 0)
                         pygame.time.set_timer(lightning_blick_event_timer, 100)
-                        blicks_max = 9 + random.randint(0,3)*3
+                        blicks_max = 12 + random.randint(0,3)*3
                 if event.type == lightning_blick_event_timer:
                     if blicks <= blicks_max:
                         if blicks % 3 == 0:
@@ -100,6 +102,12 @@ class Game:
 
             self.display.blit(bg_image, (0, 0))
             self.display.blit(dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
+            if play_button.draw():
+                running = False
+                self.run()
+            if exit_button.draw():
+                pygame.quit()
+                sys.exit()
             pygame.display.update()
 
 
@@ -113,7 +121,8 @@ class Game:
             self.screen_sliding_speed = (self.screen_sliding_speed[0]-0.05, 0)
 
     def run(self):
-        while self.running:
+        running = True
+        while running:
             delta_time = self.clock.tick()/1000
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -137,7 +146,7 @@ class Game:
             if(self.was_light_source_dragged):
                 if(self.x <= LEVEL_WIDTH*(LEVELS)):
                     self.screen_slide()
-            self.running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
+            running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
             # self.display.blit(self.progress_bar, (80, 610))
             self.progress_bar.draw(self.x)
             pygame.display.update()
@@ -146,7 +155,9 @@ class Game:
     def defeat(self):
         self.music.stop()
         self.defeat_sound.play()
-        while True:
+        try_button = ui.Button("try again", (80, 200), 40)
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -155,11 +166,13 @@ class Game:
             text = self.font.render("Try again", True, (255, 255, 255))
             self.display.blit(text, (200, 200))
             self.progress_bar.draw(self.x)
+            # if try_button.draw():
+            #     running = False
+            #     self.music.play(loops=-1)
+            #     self.main_menu()
             pygame.display.update()
 
-class MainMenu:
-    def __init__(self):
-        pass
+
 game = Game()
 game.main_menu()
 # game.run()
