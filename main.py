@@ -27,9 +27,15 @@ class Game:
         self.x = 0
         self.distance = 0
         self.running = True
+        self.prepare_map()
         self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
         self.font = pygame.font.Font('freesansbold.ttf', 128)
-        self.prepare_map()
+
+        self.music = pygame.mixer.Sound(os_join('assets', 'audio', 'Electricity.wav'))
+        self.music.set_volume(0.5)
+        self.music.play(loops=-1)
+        self.defeat_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'game-die.mp3'))
+        self.defeat_sound.set_volume(0.5)
 
     def prepare_map(self):
         for i in range(0, LEVELS):
@@ -97,6 +103,8 @@ class Game:
         self.defeat()
 
     def defeat(self):
+        self.music.stop()
+        self.defeat_sound.play()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
