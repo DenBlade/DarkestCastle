@@ -1,7 +1,7 @@
 import sys
 
 import pygame
-
+import random
 
 import player
 import sprites
@@ -61,6 +61,47 @@ class Game:
             sprites.Sprite((item.x + LEVEL_WIDTH * LEVELS, item.y - TILE_SIZE), pygame.Surface((item.width, item.height)),
                            (self.all_sprites, self.collision_sprites))
 
+    def main_menu(self):
+        bg_image = pygame.image.load(os_join("assets", "images", "background.jpg"))
+        bg_image = pygame.transform.scale(bg_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        thunder_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'thunder2.mp3'))
+        lightning_event_timer = pygame.USEREVENT + 1
+        pygame.time.set_timer(lightning_event_timer, 1000)
+        is_lighten = False
+        lightning_blick_event_timer = pygame.USEREVENT + 1
+        blicks = 0
+        blicks_max = 9
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == lightning_event_timer:
+                    if not is_lighten:
+                        thunder_sound.play()
+                        is_lighten = True
+                        pygame.time.set_timer(lightning_event_timer, 0)
+                        pygame.time.set_timer(lightning_blick_event_timer, 100)
+                        blicks_max = 9 + random.randint(0,3)*3
+                if event.type == lightning_blick_event_timer:
+                    if blicks <= blicks_max:
+                        if blicks % 3 == 0:
+                            dark_mask.fill((0,0,0))
+                        else:
+                            mask_color = random.randint(20, 255)
+                            dark_mask.fill((mask_color, mask_color, mask_color))
+                        blicks += 1
+                    else:
+                        is_lighten = False
+                        blicks = 0
+                        pygame.time.set_timer(lightning_blick_event_timer, 0)
+                        pygame.time.set_timer(lightning_event_timer, random.randint(2000, 6000))
+
+            self.display.blit(bg_image, (0, 0))
+            self.display.blit(dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
+            pygame.display.update()
+
 
     def screen_slide(self):
         self.all_sprites.offset(self.screen_sliding_speed)
@@ -116,5 +157,9 @@ class Game:
             self.progress_bar.draw(self.x)
             pygame.display.update()
 
+class MainMenu:
+    def __init__(self):
+        pass
 game = Game()
-game.run()
+game.main_menu()
+# game.run()
