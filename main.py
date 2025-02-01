@@ -1,3 +1,4 @@
+import os
 import sys
 
 import pygame
@@ -16,13 +17,14 @@ class Game:
         self.display = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("Darkest Castle")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font('freesansbold.ttf', 128)
+        self.font = pygame.font.Font('freesansbold.ttf', 96)
 
         self.initial_game_settings()
 
         self.music = pygame.mixer.Sound(os_join('assets', 'audio', 'Checking Manifest.mp3'))
-        self.main_menu_music = pygame.mixer.Sound(os_join('assets', 'audio', 'Electricity.wav'))
         self.music.set_volume(0.5)
+        self.main_menu_music = pygame.mixer.Sound(os_join('assets', 'audio', 'Electricity.wav'))
+        self.main_menu_music.set_volume(0.7)
         self.defeat_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'game-die.mp3'))
         self.defeat_sound.set_volume(0.5)
 
@@ -151,11 +153,9 @@ class Game:
                         if self.light_source.hitbox_rect.collidepoint(pygame.mouse.get_pos()):
                             self.is_dragging_light = True
                             self.was_light_source_dragged = True
-                            self.is_mouse_button_clicked = True
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         self.is_dragging_light = False
-                        self.is_mouse_button_clicked = False
             if self.is_dragging_light:
                 self.light_source.move_by_mouse(delta_time)
             else:
@@ -166,6 +166,8 @@ class Game:
             if(self.was_light_source_dragged):
                 if(self.x <= LEVEL_WIDTH*(LEVELS)):
                     self.screen_slide()
+                else:
+                    self.win_screen()
             running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
             self.progress_bar.draw(self.x)
             pygame.display.update()
@@ -174,6 +176,7 @@ class Game:
     def defeat(self):
         self.music.stop()
         self.defeat_sound.play()
+        text = self.font.render("You lost", True, (255, 255, 255))
         try_button = ui.Button("try again", (180, 350), 40)
         main_menu_button = ui.Button("back to menu", (580, 350), 40)
         running = True
@@ -195,19 +198,51 @@ class Game:
                             self.main_menu()
 
             self.light_source.defeat_animation()
-            text = self.font.render("You lost", True, (255, 255, 255))
-            self.display.blit(text, (230, 200))
+            self.display.blit(text, (280, 200))
             self.progress_bar.draw(self.x)
             try_button.draw()
             main_menu_button.draw()
             pygame.display.update()
 
-    def run2(self):
-        while True:
+    def win_screen(self):
+        win_text = self.font.render("Congratulations", True, (255, 255, 255))
+        main_menu_button = ui.Button("back to menu", (350, 300), 40)
+        sprites.Sprite((-TILE_SIZE, 0), pygame.Surface((TILE_SIZE, WINDOW_HEIGHT)), self.collision_sprites) #collider for left screen side
+        win_sound = pygame.mixer.Sound(os_join("assets", "audio", "soundeffects", "level_complete.wav"))
+        win_sound.set_volume(0.5)
+        win_sound.play()
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if self.light_source.hitbox_rect.collidepoint(pygame.mouse.get_pos()):
+                            self.is_dragging_light = True
+                        # checking for click on buttons
+                        if main_menu_button.is_hovered:
+                            running = False
+                            self.music.stop()
+                            main_menu_button.change_cursor_to_arrow()
+                            self.main_menu()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        self.is_dragging_light = False
+            delta_time = self.clock.tick() / 1000
+            if self.is_dragging_light:
+                self.light_source.move_by_mouse(delta_time)
+            else:
+                if (abs(self.light_source.get_displacement()[0]) > APPROXIMATE_ZERO and abs(
+                        self.light_source.get_displacement()[1]) > APPROXIMATE_ZERO):
+                    self.light_source.momentum(delta_time)
+            self.visible_sprites.draw()
+            self.light_source.draw()
+            self.progress_bar.draw(self.x)
+            self.display.blit(win_text, (80, 200))
+            main_menu_button.draw()
+            pygame.display.update()
 
 # class MainMenu():
 
