@@ -36,7 +36,7 @@ class Game:
         self.light_source = player.LightSource((200, 200), 100, self.collision_sprites, self.spike_colliders_sprites)
         self.is_dragging_light = False
         self.was_light_source_dragged = False
-        self.screen_sliding_speed = (-0.3, 0)
+        self.screen_sliding_speed = 50
         self.x = 0
         self.distance = 0
         self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
@@ -134,14 +134,14 @@ class Game:
             pygame.display.update()
 
 
-    def screen_slide(self):
-        self.all_sprites.offset(self.screen_sliding_speed)
-        self.light_source.offset(self.screen_sliding_speed)
-        self.x += abs(self.screen_sliding_speed[0])
-        self.distance += abs(self.screen_sliding_speed[0])
+    def screen_slide(self, delta_time):
+        self.all_sprites.offset((-self.screen_sliding_speed*delta_time,0))
+        self.light_source.offset((-self.screen_sliding_speed*delta_time,0))
+        self.x += self.screen_sliding_speed*delta_time
+        self.distance += self.screen_sliding_speed*delta_time
         if(self.distance >= CHANGING_SPEED_THRESHOLD):
             self.distance = 0
-            self.screen_sliding_speed = (self.screen_sliding_speed[0]-0.05, 0)
+            self.screen_sliding_speed = self.screen_sliding_speed+10
 
     def run(self):
         running = True
@@ -170,7 +170,7 @@ class Game:
             self.light_source.draw()
             if(self.was_light_source_dragged):
                 if(self.x <= LEVEL_WIDTH*(LEVELS)):
-                    self.screen_slide()
+                    self.screen_slide(delta_time)
                 else:
                     self.win_screen()
             running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
