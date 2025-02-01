@@ -23,7 +23,6 @@ class Button:
         self.text_render = self.font.render(text, True, (255, 255, 255))
         self.rect = self.text_render.get_rect()
         self.rect.topleft = pos
-        self.is_pressed = False
         self.is_hovered = False
 
     def on_hover(self):
@@ -35,15 +34,10 @@ class Button:
         self.display.blit(self.text_render, self.pos)
         if(self.rect.collidepoint(mouse_pos)):
             self.on_hover()
-            if(pygame.mouse.get_pressed()[0]):
-                if(not self.is_pressed):
-                    self.is_pressed = True
-                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-                    return True
-            if(pygame.mouse.get_pressed()[0] == 0):
-                self.is_pressed = False
         else:
             if(self.is_hovered):
                 self.is_hovered = False
                 self.text_render = self.font.render(self.text, True, (255, 255, 255))
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+    def change_cursor_to_arrow(self):
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)

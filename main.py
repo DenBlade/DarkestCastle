@@ -15,26 +15,30 @@ class Game:
         pygame.init()
         self.display = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("Darkest Castle")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font('freesansbold.ttf', 128)
+
+        self.initial_game_settings()
+
+        self.music = pygame.mixer.Sound(os_join('assets', 'audio', 'Checking Manifest.mp3'))
+        self.main_menu_music = pygame.mixer.Sound(os_join('assets', 'audio', 'Electricity.wav'))
+        self.music.set_volume(0.5)
+        self.defeat_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'game-die.mp3'))
+        self.defeat_sound.set_volume(0.5)
+
+    def initial_game_settings(self):
         self.all_sprites = groups.AllSprites()
         self.visible_sprites = groups.VisibleSprites()
         self.collision_sprites = pygame.sprite.Group()
         self.spike_colliders_sprites = pygame.sprite.Group()
-        self.clock = pygame.time.Clock()
-        self.light_source = player.LightSource((200,200), 100, self.collision_sprites, self.spike_colliders_sprites)
+        self.light_source = player.LightSource((200, 200), 100, self.collision_sprites, self.spike_colliders_sprites)
         self.is_dragging_light = False
         self.was_light_source_dragged = False
         self.screen_sliding_speed = (-0.3, 0)
         self.x = 0
         self.distance = 0
-        self.prepare_map()
         self.progress_bar = ui.Progress_Bar(80,610, LEVEL_WIDTH*(LEVELS))
-        self.font = pygame.font.Font('freesansbold.ttf', 128)
-
-        self.music = pygame.mixer.Sound(os_join('assets', 'audio', 'Electricity.wav'))
-        self.music.set_volume(0.5)
-        self.music.play(loops=-1)
-        self.defeat_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'game-die.mp3'))
-        self.defeat_sound.set_volume(0.5)
+        self.prepare_map()
 
     def prepare_map(self):
         for i in range(0, LEVELS):
@@ -61,9 +65,11 @@ class Game:
                            (self.all_sprites, self.collision_sprites))
 
     def main_menu(self):
+        self.main_menu_music.play(loops=-1)
         bg_image = pygame.image.load(os_join("assets", "images", "background.jpg"))
         bg_image = pygame.transform.scale(bg_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
         dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        level_selection_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'level_selection.wav'))
         thunder_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'thunder.mp3'))
         lightning_event_timer = pygame.USEREVENT + 1
         pygame.time.set_timer(lightning_event_timer, 1000)
@@ -79,6 +85,20 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # checking for click on buttons
+                    if event.button == 1:
+                        if play_button.is_hovered:
+                            running = False
+                            level_selection_sound.play()
+                            pygame.time.wait(700)
+                            play_button.change_cursor_to_arrow()
+                            self.main_menu_music.stop()
+                            self.run()
+                        if exit_button.is_hovered:
+                            pygame.quit()
+                            sys.exit()
+
                 if event.type == lightning_event_timer:
                     if not is_lighten:
                         thunder_sound.play()
@@ -102,12 +122,8 @@ class Game:
 
             self.display.blit(bg_image, (0, 0))
             self.display.blit(dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
-            if play_button.draw():
-                running = False
-                self.run()
-            if exit_button.draw():
-                pygame.quit()
-                sys.exit()
+            play_button.draw()
+            exit_button.draw()
             pygame.display.update()
 
 
@@ -122,6 +138,8 @@ class Game:
 
     def run(self):
         running = True
+        self.initial_game_settings()
+        self.music.play(loops=-1)
         while running:
             delta_time = self.clock.tick()/1000
             for event in pygame.event.get():
@@ -133,9 +151,11 @@ class Game:
                         if self.light_source.hitbox_rect.collidepoint(pygame.mouse.get_pos()):
                             self.is_dragging_light = True
                             self.was_light_source_dragged = True
+                            self.is_mouse_button_clicked = True
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         self.is_dragging_light = False
+                        self.is_mouse_button_clicked = False
             if self.is_dragging_light:
                 self.light_source.move_by_mouse(delta_time)
             else:
@@ -147,7 +167,6 @@ class Game:
                 if(self.x <= LEVEL_WIDTH*(LEVELS)):
                     self.screen_slide()
             running = (not self.light_source.is_out_of_bounds()) and self.light_source.get_is_alive()
-            # self.display.blit(self.progress_bar, (80, 610))
             self.progress_bar.draw(self.x)
             pygame.display.update()
         self.defeat()
@@ -155,23 +174,42 @@ class Game:
     def defeat(self):
         self.music.stop()
         self.defeat_sound.play()
-        try_button = ui.Button("try again", (80, 200), 40)
+        try_button = ui.Button("try again", (180, 350), 40)
+        main_menu_button = ui.Button("back to menu", (580, 350), 40)
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # checking for click on buttons
+                    if event.button == 1:
+                        if try_button.is_hovered:
+                            running = False
+                            try_button.change_cursor_to_arrow()
+                            self.run()
+                        if main_menu_button.is_hovered:
+                            running = False
+                            main_menu_button.change_cursor_to_arrow()
+                            self.main_menu()
+
             self.light_source.defeat_animation()
-            text = self.font.render("Try again", True, (255, 255, 255))
-            self.display.blit(text, (200, 200))
+            text = self.font.render("You lost", True, (255, 255, 255))
+            self.display.blit(text, (230, 200))
             self.progress_bar.draw(self.x)
-            # if try_button.draw():
-            #     running = False
-            #     self.music.play(loops=-1)
-            #     self.main_menu()
+            try_button.draw()
+            main_menu_button.draw()
             pygame.display.update()
 
+    def run2(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+# class MainMenu():
 
 game = Game()
 game.main_menu()
