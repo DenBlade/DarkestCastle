@@ -1,4 +1,3 @@
-import os
 import sys
 
 import pygame
@@ -27,6 +26,7 @@ class Game:
         self.main_menu_music.set_volume(0.7)
         self.defeat_sound = pygame.mixer.Sound(os_join('assets', 'audio', 'soundeffects', 'game-die.mp3'))
         self.defeat_sound.set_volume(0.5)
+        self.main_menu_music.play(loops=-1)
 
     def initial_game_settings(self):
         self.all_sprites = groups.AllSprites()
@@ -67,7 +67,6 @@ class Game:
                            (self.all_sprites, self.collision_sprites))
 
     def main_menu(self):
-        self.main_menu_music.play(loops=-1)
         bg_image = pygame.image.load(os_join("assets", "images", "background.jpg"))
         bg_image = pygame.transform.scale(bg_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
         dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -80,7 +79,8 @@ class Game:
         blicks = 0
         blicks_max = 12
         play_button = ui.Button("PLAY", (80, 200), 60)
-        exit_button = ui.Button("exit", (80, 280), 40)
+        tutorial_button = ui.Button("tutorial", (80, 270), 40)
+        exit_button = ui.Button("exit", (80, 310), 40)
         running = True
         while running:
             for event in pygame.event.get():
@@ -97,6 +97,10 @@ class Game:
                             play_button.change_cursor_to_arrow()
                             self.main_menu_music.stop()
                             self.run()
+                        if tutorial_button.is_hovered:
+                            running = False
+                            tutorial_button.change_cursor_to_arrow()
+                            self.tutorial_screen()
                         if exit_button.is_hovered:
                             pygame.quit()
                             sys.exit()
@@ -125,6 +129,7 @@ class Game:
             self.display.blit(bg_image, (0, 0))
             self.display.blit(dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
             play_button.draw()
+            tutorial_button.draw()
             exit_button.draw()
             pygame.display.update()
 
@@ -195,6 +200,7 @@ class Game:
                         if main_menu_button.is_hovered:
                             running = False
                             main_menu_button.change_cursor_to_arrow()
+                            self.main_menu_music.play(loops=-1)
                             self.main_menu()
 
             self.light_source.defeat_animation()
@@ -226,6 +232,7 @@ class Game:
                             running = False
                             self.music.stop()
                             main_menu_button.change_cursor_to_arrow()
+                            self.main_menu_music.play(loops=-1)
                             self.main_menu()
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
@@ -243,9 +250,26 @@ class Game:
             self.display.blit(win_text, (80, 200))
             main_menu_button.draw()
             pygame.display.update()
+    def tutorial_screen(self):
+        running = True
+        bg_image = pygame.image.load(os_join("assets", "images", "tutorial.png"))
+        main_menu_button = ui.Button("back to menu", (40, 540), 40)
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                # checking for click on buttons
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if main_menu_button.is_hovered:
+                            running = False
+                            self.main_menu()
 
-# class MainMenu():
+            self.display.blit(bg_image, (0, 0))
+            main_menu_button.draw()
+            pygame.display.update()
 
-game = Game()
-game.main_menu()
-# game.run()
+if __name__ == '__main__':
+    game = Game()
+    game.main_menu()
