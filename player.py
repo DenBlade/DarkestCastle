@@ -13,7 +13,11 @@ class LightSource:
         self.hitbox_rect.center = position
         self.dark_mask = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.dark_mask_circle = pygame.Surface((self.radius*2, self.radius*2))
-        self.light_mask = pygame.Surface((self.radius*2, self.radius*2))
+        self.light_sprites = []
+        self.prepare_light_sprites(8)
+        self.sprite_index = 0
+        self.current_sprite = self.light_sprites[self.sprite_index]
+        self.animation_speed = 16
         self.last_pos = pygame.Vector2(self.hitbox_rect.center)
         self.last_mouse_pos = pygame.Vector2(self.hitbox_rect.center)
         self.is_alive = True
@@ -21,21 +25,34 @@ class LightSource:
         self.prepare_particles()
         self.prepare_light_mask()
 
+    def prepare_light_sprites(self, sprites_number):
+        for sprite_number in range(sprites_number):
+            surface = pygame.Surface((self.radius*2, self.radius*2))
+            for i in range(0, 255):
+                brighter_rgb = min(255, i + 180 - sprite_number * 25)
+                pygame.draw.circle(surface, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
+            self.light_sprites.append(surface)
+
     def prepare_light_mask(self):
         for i in range(0, 255):
             pygame.draw.circle(self.dark_mask_circle, (i, i, i), (self.radius,self.radius), self.radius * ((256 - i) / 256))
-            brighter_rgb = min(255, i+180)
-            pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
+            # brighter_rgb = min(255, i+180)
+            # pygame.draw.circle(self.light_mask, (brighter_rgb, brighter_rgb, brighter_rgb/2), (self.radius,self.radius), self.radius/5 * ((256 - i) / 256))
 
     def prepare_particles(self):
         for i in range(0, 30):
             self.death_particles.append(Particle("square", (255, 255, 20), random.randint(30, 220), random.randint(2, 8), (random.uniform(-0.4, 0.4), random.uniform(-0.4, 0.4)), random.randint(20, 80)))
 
-    def draw(self):
+    def animate(self, delta_time):
+        self.sprite_index += self.animation_speed * delta_time
+        self.current_sprite = self.light_sprites[int(self.sprite_index)%len(self.light_sprites)]
+
+    def draw(self, delta_time):
         self.dark_mask.fill((0,0,0))
         self.dark_mask.blit(self.dark_mask_circle, (self.hitbox_rect.center[0]-self.radius, self.hitbox_rect.center[1]-self.radius))
-        self.display.blit(self.light_mask, (self.hitbox_rect.center[0]-self.radius,self.hitbox_rect.center[1]-self.radius), special_flags=pygame.BLEND_ADD)
+        self.display.blit(self.current_sprite, (self.hitbox_rect.center[0]-self.radius,self.hitbox_rect.center[1]-self.radius), special_flags=pygame.BLEND_ADD)
         self.display.blit(self.dark_mask, (0, 0), special_flags=pygame.BLEND_MULT)
+        self.animate(delta_time)
 
     def offset(self, offset):
         offset_vec = pygame.Vector2(offset)

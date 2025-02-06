@@ -167,7 +167,7 @@ class Game:
                 if(abs(self.light_source.get_displacement()[0]) > APPROXIMATE_ZERO and abs(self.light_source.get_displacement()[1]) > APPROXIMATE_ZERO):
                     self.light_source.momentum(delta_time)
             self.visible_sprites.draw()
-            self.light_source.draw()
+            self.light_source.draw(delta_time)
             if(self.was_light_source_dragged):
                 if(self.x <= LEVEL_WIDTH*(LEVELS)):
                     self.screen_slide(delta_time)
@@ -245,7 +245,7 @@ class Game:
                         self.light_source.get_displacement()[1]) > APPROXIMATE_ZERO):
                     self.light_source.momentum(delta_time)
             self.visible_sprites.draw()
-            self.light_source.draw()
+            self.light_source.draw(delta_time)
             self.progress_bar.draw(self.x)
             self.display.blit(win_text, (80, 200))
             main_menu_button.draw()
